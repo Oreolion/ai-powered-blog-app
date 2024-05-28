@@ -1,12 +1,48 @@
 "use client";
 
 import { useRef, useState } from "react";
+import {
+    useMakeCopilotReadable,
+    useCopilotAction,
+  } from "@copilotkit/react-core";
+  import {
+    CopilotTextarea,
+    HTMLCopilotTextAreaElement,
+  } from "@copilotkit/react-textarea";
 
 export function Article() {
   // Define state variables for article outline, copilot text, and article title
   const [articleOutline, setArticleOutline] = useState("");
   const [copilotText, setCopilotText] = useState("");
   const [articleTitle, setArticleTitle] = useState("");
+
+  useMakeCopilotReadable("Blog article outline: " + JSON.stringify(articleOutline));
+  const copilotTextareaRef = useRef<HTMLCopilotTextAreaElement>(null);
+  useCopilotAction(
+    {
+      name: "researchBlogArticleTopic",
+      description: "Research a given topic for a blog article.",
+      parameters: [
+        {
+          name: "articleTitle",
+          type: "string",
+          description: "Title for a blog article.",
+          required: true,
+        },
+        {
+          name: "articleOutline",
+          type: "string",
+          description:"Outline for a blog article that shows what the article covers.",
+          required: true,
+        },
+      ],
+      handler: async ({ articleOutline, articleTitle }) => {
+        setArticleOutline(articleOutline);
+        setArticleTitle(articleTitle);
+              },
+            },
+            []
+          );
 
 return (
     // Form element for article input
@@ -24,9 +60,33 @@ return (
           onChange={(event) => setArticleTitle(event.target.value)}
         />
       </div>
+      <CopilotTextarea
+        value={copilotText}
+        ref={copilotTextareaRef}
+        placeholder="Write your article content here"
+        onChange={(event) => setCopilotText(event.target.value)}
+        className="p-4 w-full aspect-square font-bold text-xl bg-slate-800 text-white rounded-lg resize-none"
+        placeholderStyle={{
+          color: "white",
+          opacity: 0.5,
+        }}
+        autosuggestionsConfig={{
+          textareaPurpose: articleTitle,
+          chatApiConfigs: {
+            suggestionsApiConfig: {
+              forwardedParams: {
+                max_tokens: 5,
+                stop: ["\n", ".", ","],
+              },
+            },
+            insertionApiConfig: {},
+          },
+          debounceTime: 250,
+        }}
+      />
 {/* Textarea for article content */}
       <textarea
-        className="p-4 w-full aspect-square font-bold text-xl bg-slate-800 text-white rounded-lg resize-none"
+        className="p-4 w-full aspect-square font-bold text-xl bg-slate-800 text-white rounded-lg resize-none hidden"
         id="content"
         name="content"
         value={copilotText}
